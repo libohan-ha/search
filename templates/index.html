@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>B站视频 & 图书搜索</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>搜索中心</h1>
+        <div class="search-type">
+            <label class="radio-label">
+                <input type="radio" name="search_type" value="video" checked>
+                <span>视频</span>
+            </label>
+            <label class="radio-label">
+                <input type="radio" name="search_type" value="book">
+                <span>图书</span>
+            </label>
+        </div>
+        <form action="{{ url_for('search') }}" method="get" id="search-form">
+            <div class="search-box">
+                <input type="text" name="keyword" placeholder="输入关键词搜索..." required>
+                <input type="hidden" name="type" value="video" id="search-type-input">
+                <button type="submit">Search</button>
+            </div>
+        </form>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+    </div>
+    <script>
+        document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('search-type-input').value = this.value;
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search: {{ keyword }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Search: {{ keyword }}</h1>
+        <div class="search-type">
+            <label class="radio-label">
+                <input type="radio" name="search_type" value="video" {% if search_type == 'video' %}checked{% endif %}>
+                <span>视频</span>
+            </label>
+            <label class="radio-label">
+                <input type="radio" name="search_type" value="book" {% if search_type == 'book' %}checked{% endif %}>
+                <span>图书</span>
+            </label>
+        </div>
+        <form action="{{ url_for('search') }}" method="get" id="search-form">
+            <div class="search-box">
+                <input type="text" name="keyword" value="{{ keyword }}" required>
+                <input type="hidden" name="type" value="{{ search_type }}" id="search-type-input">
+                <button type="submit">Search</button>
+            </div>
+        </form>
+        <div class="refresh-button">
+            <button onclick="refreshResults()" class="refresh">换一批</button>
+        </div>
+        
+        {% if search_type == 'video' %}
+        <div class="videos">
+            {% for video in videos %}
+            <div class="video-card">
+                <div class="video-info">
+                    <h3><a href="{{ video.url }}" target="_blank">{{ video.title | safe }}</a></h3>
+                    <p class="author">UP主: {{ video.author }}</p>
+                    <p class="play-count">播放量: {{ video.play_count }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="books">
+            {% for book in books %}
+            <div class="book-card">
+                <div class="book-info">
+                    <h3>{{ book.title }}</h3>
+                    <p class="author">作者: {{ book.author }}</p>
+                    <p class="year">出版年份: {{ book.year }}</p>
+                    <p class="description">{{ book.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script type="text/javascript">
+        // 刷新结果函数
+        async function refreshResults() {
+            const keyword = document.querySelector('input[name="keyword"]').value;
+            const type = document.getElementById('search-type-input').value;
+            
+            try {
+                const response = await fetch(`/search?keyword=${encodeURIComponent(keyword)}&type=${type}&refresh=true`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDisplay(type, data.results);
+                } else {
+                    alert(data.error || '刷新失败，请重试');
+                }
+            } catch (error) {
+                alert('刷新失败，请重试');
+            }
+        }
+        
+        // 更新显示函数
+        function updateDisplay(type, results) {
+            const container = type === 'video' ? document.querySelector('.videos') : document.querySelector('.books');
+            if (!container) return;
+
+            container.innerHTML = results.map(item => {
+                if (type === 'video') {
+                    return `
+                        <div class="video-card">
+                            <div class="video-info">
+                                <h3><a href="${item.url}" target="_blank">${item.title}</a></h3>
+                                <p class="author">UP主: ${item.author}</p>
+                                <p class="play-count">播放量: ${item.play_count}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="book-card">
+                            <div class="book-info">
+                                <h3>${item.title}</h3>
+                                <p class="author">作者: ${item.author}</p>
+                                <p class="year">出版年份: ${item.year}</p>
+                                <p class="description">${item.description}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+        
+        // 搜索类型切换处理
+        document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const newType = this.value;
+                document.getElementById('search-type-input').value = newType;
+                document.getElementById('search-form').submit();
+            });
+        });
+    </script>
+</body>
+</html> 
